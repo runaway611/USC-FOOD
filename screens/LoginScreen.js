@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { styles } from './Styles';
-import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { collection, doc, setDoc } from 'firebase/firestore'; 
-import { db } from '../config/firebaseConfig'; 
-import { useNavigation } from '@react-navigation/native';
+import { registerUser } from '../services/firebaseService'; // Importa la función
 
 export default function LoginScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,8 +10,6 @@ export default function LoginScreen() {
   const [userName, setUserName] = useState('');
   const [userLastName, setUserLastName] = useState('');
   const [userPhone, setUserPhone] = useState('');
-  
-  const auth = getAuth();
   const navigation = useNavigation();
 
   const handleRegister = async () => {
@@ -27,59 +22,20 @@ export default function LoginScreen() {
       return;
     }
 
-    try {
-      // Registrar el usuario en Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Enviar un correo de verificación
-      await sendEmailVerification(user);
-
-      // Guardar el usuario en Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        email: user.email,
-        name: userName,
-        lastName: userLastName,
-        phone: userPhone,
-        role: 'user',  // Asignar el rol de usuario normal
-        verified: false  // Usuario aún no verificado
-      });
-
-      Alert.alert('Registro exitoso', 'Por favor verifica tu correo electrónico.');
+    // Llamar a la función de servicio para registrar el usuario
+    const result = await registerUser(email, password, userName, userLastName, userPhone);
+    
+    if (result.success) {
+      Alert.alert('Registro exitoso', result.message);
       navigation.navigate('User');  // Redirigir a la pantalla de usuario
-
-    } catch (error) {
-      console.error('Error al registrar el usuario: ', error);
-      Alert.alert('Error', 'Hubo un problema al registrar el usuario.');
+    } else {
+      Alert.alert('Error', result.message);
     }
-  };
-
-  const handleTabChange = (tab) => {
-    setIsLogin(tab === 'login');
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>USC</Text>
-        <Text style={styles.logoSubtitle}>Universidad Santiago de Cali</Text>
-      </View>
-
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, isLogin && styles.activeTab]}
-          onPress={() => handleTabChange('login')}
-        >
-          <Text style={styles.tabText}>Login</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, !isLogin && styles.activeTab]}
-          onPress={() => handleTabChange('register')}
-        >
-          <Text style={styles.tabText}>Registrarse</Text>
-        </TouchableOpacity>
-      </View>
-
+      {/* Resto del código UI */}
       {isLogin ? (
         <View style={styles.formContainer}>
           <TextInput
