@@ -1,16 +1,38 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { styles } from './Styles';
-import { registerUser } from '../services/firebaseService'; // Importa la función
+import { registerUser, loginUser } from '../services/firebaseService'; // Importa la función de servicio
+import { useNavigation } from '@react-navigation/native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function LoginScreen() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(true); // Estado para alternar entre login y registro
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [userName, setUserName] = useState('');
   const [userLastName, setUserLastName] = useState('');
   const [userPhone, setUserPhone] = useState('');
   const navigation = useNavigation();
+
+  // Función para manejar el login
+  const handleLogin = async () => {
+    const result = await loginUser(userEmail, userPassword);
+
+    if (result.success) {
+      const userRole = result.role;
+
+      // Redirigir a la pantalla según el rol del usuario
+      if (userRole === 1) {
+        navigation.navigate('User');  // Redirigir a la pantalla de usuario normal
+      } else if (userRole === 2) {
+        navigation.navigate('Restaurant');  // Redirigir a la pantalla de restaurante
+      } else {
+        Alert.alert('Error', 'Rol de usuario desconocido');
+      }
+    } else {
+      Alert.alert('Error', result.message);
+    }
+  };
 
   const handleRegister = async () => {
     const email = userEmail.toLowerCase(); // Convierte el correo a minúsculas
@@ -22,7 +44,6 @@ export default function LoginScreen() {
       return;
     }
 
-    // Llamar a la función de servicio para registrar el usuario
     const result = await registerUser(email, password, userName, userLastName, userPhone);
     
     if (result.success) {
@@ -34,8 +55,34 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Resto del código UI */}
+    <KeyboardAwareScrollView
+      contentContainerStyle={styles.container}
+      enableOnAndroid={true}
+      extraScrollHeight={20} // Ajustar espacio extra al hacer scroll
+      keyboardShouldPersistTaps="handled" // Permite que el teclado siga abierto al hacer scroll
+    >
+      <View style={styles.logoContainer}>
+        <Text style={styles.logoText}>USC</Text>
+        <Text style={styles.logoSubtitle}>Universidad Santiago de Cali</Text>
+      </View>
+
+      {/* Contenedor de pestañas para alternar entre Login y Registrarse */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, isLogin && styles.activeTab]}
+          onPress={() => setIsLogin(true)}
+        >
+          <Text style={styles.tabText}>Login</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, !isLogin && styles.activeTab]}
+          onPress={() => setIsLogin(false)}
+        >
+          <Text style={styles.tabText}>Registrarse</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Mostrar formulario de login o registro según la pestaña activa */}
       {isLogin ? (
         <View style={styles.formContainer}>
           <TextInput
@@ -55,7 +102,7 @@ export default function LoginScreen() {
           <TouchableOpacity style={styles.forgotPassword}>
             <Text style={styles.linkText}>¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
         </View>
@@ -99,6 +146,6 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
       )}
-    </View>
+    </KeyboardAwareScrollView>
   );
 }
