@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker'; // Importa expo-image-picker correctamente
+import * as ImagePicker from 'expo-image-picker'; // Importa expo-image-picker
 import { uploadImageToFirebase, addItemToMenu } from '../services/firebaseService';
 import { styles } from './Styles';
 
 export default function RestaurantAddItemScreen() {
-  const [imageUri, setImageUri] = useState(null); // Estado para almacenar la URI de la imagen seleccionada
+  const [imageUri, setImageUri] = useState(null);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
 
-  // Función para seleccionar una imagen desde la galería usando expo-image-picker
+  
+
+  // Nueva función pickImage actualizada
   const pickImage = async () => {
     try {
       // Solicita permisos para acceder a la galería
@@ -39,43 +41,38 @@ export default function RestaurantAddItemScreen() {
       Alert.alert('Error', 'Hubo un problema al seleccionar la imagen.');
     }
   };
+  
 
-  // Función para agregar un ítem al menú junto con la imagen
   const handleAddItem = async () => {
+    if (!imageUri) {
+      Alert.alert('Error', 'Por favor, selecciona una imagen válida antes de continuar.');
+      return;
+    }
+  
     try {
-      if (!imageUri) {
-        Alert.alert('Error', 'Selecciona una imagen antes de agregar el ítem.');
-        return;
-      }
-
-      // Subir la imagen a Firebase Storage y obtener la URL
-      const imageUrl = await uploadImageToFirebase(imageUri);
-
-      // Datos del ítem a agregar
       const itemData = {
         name,
         price,
         description,
-        imageUrl, // Incluye la URL de la imagen en los datos del ítem
       };
-
-      // Llama a la función para agregar el ítem al menú en Firebase
-      await addItemToMenu(itemData);
+  
+      // Llama a la función para agregar el ítem junto con la URI de la imagen
+      await addItemToMenu(itemData, imageUri);
       Alert.alert('Éxito', 'El ítem ha sido agregado.');
     } catch (error) {
       console.error('Error al agregar el ítem:', error);
       Alert.alert('Error', 'Hubo un problema al agregar el ítem.');
     }
   };
+  
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Agregar ítem al menú</Text>
 
-      <TouchableOpacity onPress={pickImage} style={styles.button}>
-        <Text style={styles.buttonText}>Seleccionar Imagen</Text>
+      <TouchableOpacity onPress={pickImage}>
+        <Text>Seleccionar Imagen</Text>
       </TouchableOpacity>
-
       {imageUri && <Image source={{ uri: imageUri }} style={{ width: 100, height: 100 }} />}
 
       <TextInput
@@ -89,7 +86,6 @@ export default function RestaurantAddItemScreen() {
         placeholder="Precio"
         value={price}
         onChangeText={setPrice}
-        keyboardType="numeric" // Para que el teclado sea numérico
       />
       <TextInput
         style={styles.input}

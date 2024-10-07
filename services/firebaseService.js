@@ -1,5 +1,5 @@
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'; 
+import { collection, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs } from 'firebase/firestore'; 
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../config/firebaseConfig'; 
 
@@ -54,7 +54,11 @@ export const loginUser = async (email, password) => {
 };
 
 // Subir imagen a Firebase Storage y obtener la URL
-export const uploadImageToFirebase = async (uri) => {
+const uploadImageToFirebase = async (uri) => {
+  if (!uri) {
+    throw new Error("URI de imagen no válida");
+  }
+
   try {
     const storage = getStorage();
     const response = await fetch(uri);
@@ -69,43 +73,44 @@ export const uploadImageToFirebase = async (uri) => {
     const downloadUrl = await getDownloadURL(storageRef);
     return downloadUrl;
   } catch (error) {
-    console.error('Error al subir la imagen:', error);
-    throw new Error('Error al subir la imagen');
+    console.error("Error al subir la imagen:", error);
+    throw new Error("Error al subir la imagen");
   }
 };
 
 
 // Agregar ítem al menú
 export const addItemToMenu = async (itemData, imageUri) => {
-  console.log('Subiendo ítem:', itemData);
-  console.log('Imagen seleccionada URI:', imageUri);
-  try {
-    const auth = getAuth();
-    const user = auth.currentUser;
+  const auth = getAuth();
+  const user = auth.currentUser;
 
-    if (user) {
-      const uid = user.uid; // UID del restaurante autenticado
-      const menuCollectionRef = collection(db, `restaurants/${uid}/menuItems`);
+  if (user) {
+    const uid = user.uid; // UID del restaurante autenticado
+    const menuCollectionRef = collection(db, `restaurants/${uid}/menuItems`);
 
-      // Primero sube la imagen y obtén la URL
-      const imageUrl = await uploadImageToFirebase(imageUri);
-      console.log('Imagen subida a Firebase con URL:', imageUrl);
+    // Primero sube la imagen y obtén la URL
+    const imageUrl = await uploadImageToFirebase(imageUri);
 
-      // Luego guarda el ítem con la URL de la imagen
-      await addDoc(menuCollectionRef, {
-        ...itemData,
-        imageUrl, // Aquí se agrega la URL de la imagen
-      });
-      console.log('Ítem agregado correctamente a Firestore.');
+    if (imageUrl) {
+      // Luego guarda el ítem con la URL de la imagen en Firestore
+      try {
+        await setDoc(doc(menuCollectionRef), {
+          ...itemData,
+          imageUrl, // Aquí se agrega la URL de la imagen
+        });
+        console.log("Item added successfully");
+      } catch (error) {
+        console.error('Error al agregar ítem al menú:', error);
+        throw new Error('Error al agregar ítem al menú');
+      }
     } else {
-      throw new Error('Usuario no autenticado');
+      console.error('Error: No se pudo obtener la URL de la imagen');
+      throw new Error('No se pudo obtener la URL de la imagen');
     }
-  } catch (error) {
-    console.error('Error al agregar ítem al menú:', error);
+  } else {
+    throw new Error('Usuario no autenticado');
   }
 };
-
-
 
 // Actualizar ítem en el menú
 export const updateMenuItem = async (itemId, updatedData) => {
@@ -133,4 +138,17 @@ export const deleteMenuItem = async (itemId) => {
   } else {
     throw new Error('Usuario no autenticado');
   }
+};
+
+export const fetchItems = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const uid = user.uid;
+  const itemsCollection = collection(db, 'restaurants', uid, 'menuItems');
+  const itemsSnapshot = await getDocs(itemsCollection);
+  const itemsList = itemsSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+  return itemsList;
 };
