@@ -1,28 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { fetchItems } from '../services/firebaseService'; // Asegúrate de tener esta función correctamente implementada
+import { onSnapshot, collection } from 'firebase/firestore';
+import { db } from '../config/firebaseConfig'; // Asegúrate de que tienes la configuración correcta
 import { styles } from './Styles';
+import { getUser } from '../services/firebaseService';
 
 export default function RestaurantScreen() {
   const navigation = useNavigation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userRestaurant, setUserRestaurant] = useState(null);
 
-  // Función para obtener los ítems del menú de Firestore
+  // Usa onSnapshot para escuchar los cambios en tiempo real desde Firestore
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const fetchedItems = await fetchItems();
-        setItems(fetchedItems);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error al obtener los ítems:', error);
-        setLoading(false);
+    const fetchUserRestaurant = async () => {
+      const uid = await getUser();
+      setUserRestaurant(uid);
+      if (uid) {
+        const menuCollectionRef = collection(db, 'restaurants', uid, 'menuItems');
+
+        const unsubscribe = onSnapshot(menuCollectionRef, (snapshot) => {
+          const fetchedItems = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setItems(fetchedItems);
+          setLoading(false);
+        });
+
+        // Limpia el listener cuando el componente se desmonte
+        return () => unsubscribe();
       }
     };
 
-    fetchData();
+    fetchUserRestaurant(); // Llama a la función para obtener el restaurante
   }, []);
 
   // Renderizar cada ítem en la lista
@@ -46,8 +58,6 @@ export default function RestaurantScreen() {
         </TouchableOpacity>
       </View>
 
-      
-
       {/* Menú inferior */}
       <View style={styles.bottomMenu}>
         <TouchableOpacity style={styles.menuButton}>
@@ -66,6 +76,7 @@ export default function RestaurantScreen() {
           <Text style={styles.menuButtonText}>Historial</Text>
         </TouchableOpacity>
       </View>
+
       {/* Mostrar lista de ítems */}
       <View style={styles.itemsListContainer}>
         {loading ? (
@@ -78,6 +89,7 @@ export default function RestaurantScreen() {
           />
         )}
       </View>
+      
     </View>
   );
 }

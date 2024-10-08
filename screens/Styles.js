@@ -61,6 +61,12 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
   },
+  deleteButton: {
+    backgroundColor: '#ff0000',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
   buttonText: {
     color: '#fff',
     fontSize: 16,

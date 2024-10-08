@@ -152,3 +152,11 @@ export const fetchItems = async () => {
   }));
   return itemsList;
 };
+
+export const getUser = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const uid = user.uid;
+  return uid;
+}
+
