@@ -113,14 +113,18 @@ export const addItemToMenu = async (itemData, imageUri) => {
 };
 
 // Actualizar ítem en el menú
-export const updateMenuItem = async (itemId, updatedData) => {
+export const updateMenuItem = async (itemId, updatedData, imageUri) => {
   const auth = getAuth();
   const user = auth.currentUser;
+
+  const imageUrl = await uploadImageToFirebase(imageUri);
 
   if (user) {
     const uid = user.uid;
     const itemDocRef = doc(db, `restaurants/${uid}/menuItems`, itemId);
-    await updateDoc(itemDocRef, updatedData);
+    await updateDoc(itemDocRef, {...updatedData,
+      imageUrl
+    }) ;
   } else {
     throw new Error('Usuario no autenticado');
   }

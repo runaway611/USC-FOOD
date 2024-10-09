@@ -37,11 +37,9 @@ export default function RestaurantEditItemScreen({ route, navigation }) {
 
   const handleUpdate = async () => {
     try {
-      let newImageUrl = imageUri;
-
-      // Si la imagen fue cambiada, se sube la nueva imagen
-      if (imageUri !== item.imageUrl) {
-        newImageUrl = await uploadImageToFirebase(imageUri);
+      if (!imageUri) {
+        Alert.alert('Error', 'Por favor, selecciona una imagen válida antes de continuar.');
+        return;
       }
 
       // Actualiza los datos del ítem
@@ -49,10 +47,9 @@ export default function RestaurantEditItemScreen({ route, navigation }) {
         name,
         price,
         description,
-        imageUrl: newImageUrl,
       };
 
-      await updateMenuItem(item.id, updatedItem); // Actualizar en Firestore
+      await updateMenuItem(item.id, updatedItem, imageUri); // Actualizar en Firestore
       Alert.alert('Éxito', 'El ítem ha sido actualizado.');
       navigation.goBack();
     } catch (error) {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { onSnapshot, collection } from 'firebase/firestore';
-import { db } from '../config/firebaseConfig'; // Asegúrate de que tienes la configuración correcta
+import { db } from '../config/firebaseConfig'; 
 import { styles } from './Styles';
 import { getUser } from '../services/firebaseService';
 
