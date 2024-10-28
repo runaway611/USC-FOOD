@@ -1,51 +1,79 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, Image, ActivityIndicator, TextInput, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { onSnapshot, collection } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
-
-const screenWidth = Dimensions.get('window').width;
+import { useNavigation } from '@react-navigation/native';
 
 export default function UserHomeScreen() {
   const [dishes, setDishes] = useState([]);
+  const [filteredDishes, setFilteredDishes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const screenWidth = Dimensions.get('window').width;
+  const navigation = useNavigation();
 
   useEffect(() => {
     const allMenuItemsRef = collection(db, 'allMenuItems');
+
     const unsubscribe = onSnapshot(allMenuItemsRef, (snapshot) => {
       const fetchedDishes = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       }));
       setDishes(fetchedDishes);
+      setFilteredDishes(fetchedDishes);
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
+  const handleSearch = (text) => {
+    setSearchTerm(text);
+    if (text === '') {
+      setFilteredDishes(dishes);
+    } else {
+      const filtered = dishes.filter(dish =>
+        dish.name.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredDishes(filtered);
+    }
+  };
+
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      <Text style={styles.title}>{item.name}</Text>
-      <Text style={styles.description}>{item.description}</Text>
-      <Text style={styles.price}>${item.price}</Text>
-    </View>
+    <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { item })}>
+      <View style={styles.card}>
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+        <View style={styles.cardContent}>
+          <Text style={styles.title} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
+          <Text style={styles.price}>${item.price}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Buscar platos..."
+        value={searchTerm}
+        onChangeText={handleSearch}
+      />
       {loading ? (
-        <Text>Loading...</Text>
-      ) : (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : filteredDishes.length > 0 ? (
         <Carousel
-          width={screenWidth}
-          height={300}
-          autoPlay={true}
-          data={dishes}
-          scrollAnimationDuration={1000}
+          data={filteredDishes}
           renderItem={renderItem}
+          width={screenWidth}
+          height={250}
           mode="parallax-layers"
         />
+      ) : (
+        <Text>No se encontraron resultados.</Text>
       )}
     </View>
   );
@@ -54,37 +82,56 @@ export default function UserHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingTop: 20,
     alignItems: 'center',
+  },
+  searchBar: {
+    width: '90%',
+    padding: 10,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 20,
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 10,
-    padding: 10,
+    padding: 15,
     marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
     width: '90%',
-    alignItems: 'center',
+    minHeight: 200, // Ajusta la altura mínima para asegurar espacio
+    flexDirection: 'column', // Apilar elementos en columna
   },
   image: {
     width: '100%',
-    height: 200,
+    height: 120, // Reduce la altura para dejar espacio para el texto
     borderRadius: 10,
+    marginBottom: 10,
+  },
+  cardContent: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 10,
     color: '#333',
+    marginBottom: 5,
   },
   description: {
     fontSize: 14,
     color: '#666',
-    marginTop: 5,
+    marginBottom: 5,
   },
   price: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 10,
     color: '#000',
   },
 });

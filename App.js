@@ -5,7 +5,8 @@ import RestaurantScreen from './screens/RestaurantScreen';
 import RestaurantAddItemScreen from './screens/RestaurantAddItemScreen';
 import RestaurantEditItemScreen from './screens/RestaurantEditItemScreen';
 import LoginScreen from './screens/LoginScreen';
-import UserScreen from './screens/UserScreen'; 
+import UserScreen from './screens/UserScreen';
+import ProductDetailScreen from './screens/ProductDetailScreen';
 
 const Stack = createStackNavigator();
 
@@ -13,41 +14,45 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
-        
+
         {/* Pantalla de Login */}
-        <Stack.Screen 
-          name="Login" 
-          component={LoginScreen} 
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
           options={{ headerShown: false }} // Ocultar el encabezado en el login
         />
 
         {/* Pantalla del Usuario */}
-        <Stack.Screen 
-          name="User" 
-          component={UserScreen} 
-          options={{ title: 'Usuario' }} 
+        <Stack.Screen
+          name="User"
+          component={UserScreen}
+          options={{ title: 'Usuario' }}
         />
 
         {/* Pantalla Principal del Restaurante */}
-        <Stack.Screen 
-          name="Restaurant" 
-          component={RestaurantScreen} 
-          options={{ title: 'Restaurante' }} 
+        <Stack.Screen
+          name="Restaurant"
+          component={RestaurantScreen}
+          options={{ title: 'Restaurante' }}
         />
 
         {/* Pantalla para agregar un nuevo ítem */}
-        <Stack.Screen 
-          name="RestaurantAddItemScreen" 
-          component={RestaurantAddItemScreen} 
-          options={{ title: 'Agregar Item' }} 
+        <Stack.Screen
+          name="RestaurantAddItemScreen"
+          component={RestaurantAddItemScreen}
+          options={{ title: 'Agregar Item' }}
         />
 
         {/* Pantalla para editar y eliminar un ítem */}
-        <Stack.Screen 
-          name="RestaurantEditItemScreen" 
-          component={RestaurantEditItemScreen} 
-          options={{ title: 'Editar/Eliminar Item' }} 
+        <Stack.Screen
+          name="RestaurantEditItemScreen"
+          component={RestaurantEditItemScreen}
+          options={{ title: 'Editar/Eliminar Item' }}
         />
+
+        <Stack.Screen
+          name="ProductDetail"
+          component={ProductDetailScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>
