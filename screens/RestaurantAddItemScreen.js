@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker'; // Importa expo-image-picker
 import { uploadImageToFirebase, addItemToMenu } from '../services/firebaseService';
 import { styles } from './Styles';
 
+
 export default function RestaurantAddItemScreen() {
   const [imageUri, setImageUri] = useState(null);
   const [name, setName] = useState('');

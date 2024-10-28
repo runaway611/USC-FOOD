@@ -1,5 +1,5 @@
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs } from 'firebase/firestore'; 
+import { collection, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, addDoc } from 'firebase/firestore'; 
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../config/firebaseConfig'; 
 
@@ -86,45 +86,55 @@ export const addItemToMenu = async (itemData, imageUri) => {
 
   if (user) {
     const uid = user.uid; // UID del restaurante autenticado
-    const menuCollectionRef = collection(db, `restaurants/${uid}/menuItems`);
+    const menuCollectionRef = collection(db, 'restaurants', uid, 'menuItems'); // Colección del restaurante
 
-    // Primero sube la imagen y obtén la URL
+    // Subir imagen y obtener la URL
     const imageUrl = await uploadImageToFirebase(imageUri);
 
-    if (imageUrl) {
-      // Luego guarda el ítem con la URL de la imagen en Firestore
-      try {
-        await setDoc(doc(menuCollectionRef), {
-          ...itemData,
-          imageUrl, // Aquí se agrega la URL de la imagen
-        });
-        console.log("Item added successfully");
-      } catch (error) {
-        console.error('Error al agregar ítem al menú:', error);
-        throw new Error('Error al agregar ítem al menú');
-      }
-    } else {
-      console.error('Error: No se pudo obtener la URL de la imagen');
-      throw new Error('No se pudo obtener la URL de la imagen');
-    }
+    // Datos del nuevo ítem
+    const newItemData = {
+      ...itemData,
+      imageUrl,
+      restaurantId: uid, // Añadimos el ID del restaurante para referencia
+    };
+
+    // Crear un nuevo documento en menuItems y obtener su referencia
+    const newDocRef = doc(menuCollectionRef);
+    await setDoc(newDocRef, newItemData);
+
+    // Agregar el mismo ítem a la colección global allMenuItems con el mismo ID
+    const allMenuItemsDocRef = doc(db, 'allMenuItems', newDocRef.id);
+    await setDoc(allMenuItemsDocRef, newItemData);
   } else {
     throw new Error('Usuario no autenticado');
   }
 };
 
+
 // Actualizar ítem en el menú
 export const updateMenuItem = async (itemId, updatedData, imageUri) => {
   const auth = getAuth();
   const user = auth.currentUser;
-
   const imageUrl = await uploadImageToFirebase(imageUri);
 
   if (user) {
     const uid = user.uid;
     const itemDocRef = doc(db, `restaurants/${uid}/menuItems`, itemId);
+
+    // Actualizar en la colección del restaurante
     await updateDoc(itemDocRef, {...updatedData,
       imageUrl
-    }) ;
+    });
+
+    // Reflejar el cambio en la colección `allMenuItems`
+    const allMenuItemRef = doc(db, 'allMenuItems', itemId); // Asumiendo que `itemId` es el mismo en ambas colecciones
+    const allMenuItemSnapshot = await getDoc(allMenuItemRef);
+
+    if (allMenuItemSnapshot.exists()) {
+      await updateDoc(allMenuItemRef, {...updatedData,
+        imageUrl
+      });
+    }
   } else {
     throw new Error('Usuario no autenticado');
   }
@@ -138,7 +148,17 @@ export const deleteMenuItem = async (itemId) => {
   if (user) {
     const uid = user.uid;
     const itemDocRef = doc(db, `restaurants/${uid}/menuItems`, itemId);
+
+    // Eliminar de la colección del restaurante
     await deleteDoc(itemDocRef);
+
+    // Eliminar de la colección `allMenuItems`
+    const allMenuItemRef = doc(db, 'allMenuItems', itemId); // Asumiendo que `itemId` es el mismo en ambas colecciones
+    const allMenuItemSnapshot = await getDoc(allMenuItemRef);
+
+    if (allMenuItemSnapshot.exists()) {
+      await deleteDoc(allMenuItemRef);
+    }
   } else {
     throw new Error('Usuario no autenticado');
   }
