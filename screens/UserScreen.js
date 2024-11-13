@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ActivityIndicator, TextInput, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, Image, ActivityIndicator, TextInput, StyleSheet, Dimensions, TouchableOpacity, Button } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { onSnapshot, collection } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
 
-export default function UserHomeScreen() {
+export default function UserScreen() {
   const [dishes, setDishes] = useState([]);
   const [filteredDishes, setFilteredDishes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +75,7 @@ export default function UserHomeScreen() {
       ) : (
         <Text>No se encontraron resultados.</Text>
       )}
+       <Button title="Ir al Carrito" onPress={() => navigation.navigate('Cart')} />
     </View>
   );
 }

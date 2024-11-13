@@ -7,54 +7,67 @@ import RestaurantEditItemScreen from './screens/RestaurantEditItemScreen';
 import LoginScreen from './screens/LoginScreen';
 import UserScreen from './screens/UserScreen';
 import ProductDetailScreen from './screens/ProductDetailScreen';
+import CartScreen from './screens/CartScreen'; 
+import { CartProvider } from './context/CartContext'; 
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+    <CartProvider> 
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Login">
 
-        {/* Pantalla de Login */}
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ headerShown: false }} // Ocultar el encabezado en el login
-        />
+         
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
 
-        {/* Pantalla del Usuario */}
-        <Stack.Screen
-          name="User"
-          component={UserScreen}
-          options={{ title: 'Usuario' }}
-        />
+          
+          <Stack.Screen
+            name="User"
+            component={UserScreen}
+            options={{ title: 'Usuario' }}
+          />
 
-        {/* Pantalla Principal del Restaurante */}
-        <Stack.Screen
-          name="Restaurant"
-          component={RestaurantScreen}
-          options={{ title: 'Restaurante' }}
-        />
+         
+          <Stack.Screen
+            name="Restaurant"
+            component={RestaurantScreen}
+            options={{ title: 'Restaurante' }}
+          />
 
-        {/* Pantalla para agregar un nuevo ítem */}
-        <Stack.Screen
-          name="RestaurantAddItemScreen"
-          component={RestaurantAddItemScreen}
-          options={{ title: 'Agregar Item' }}
-        />
+        
+          <Stack.Screen
+            name="RestaurantAddItemScreen"
+            component={RestaurantAddItemScreen}
+            options={{ title: 'Agregar Item' }}
+          />
 
-        {/* Pantalla para editar y eliminar un ítem */}
-        <Stack.Screen
-          name="RestaurantEditItemScreen"
-          component={RestaurantEditItemScreen}
-          options={{ title: 'Editar/Eliminar Item' }}
-        />
+        
+          <Stack.Screen
+            name="RestaurantEditItemScreen"
+            component={RestaurantEditItemScreen}
+            options={{ title: 'Editar/Eliminar Item' }}
+          />
 
-        <Stack.Screen
-          name="ProductDetail"
-          component={ProductDetailScreen} />
+          <Stack.Screen
+            name="ProductDetail"
+            component={ProductDetailScreen}
+            options={{ title: 'Detalles del Producto' }}
+          />
 
-      </Stack.Navigator>
-    </NavigationContainer>
+       
+          <Stack.Screen
+            name="Cart"
+            component={CartScreen}
+            options={{ title: 'Carrito de Compras' }}
+          />
+
+        </Stack.Navigator>
+      </NavigationContainer>
+    </CartProvider>
   );
 }

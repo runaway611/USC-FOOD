@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, Image, Button, StyleSheet } from 'react-native';
+import { CartContext } from '../context/CartContext';
 
 export default function ProductDetailScreen({ route, navigation }) {
+  const { addToCart } = useContext(CartContext);
   const { item } = route.params;
 
   return (
@@ -10,12 +12,7 @@ export default function ProductDetailScreen({ route, navigation }) {
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.description}>{item.description}</Text>
       <Text style={styles.price}>${item.price}</Text>
-      <Button
-        title="Añadir al carrito"
-        onPress={() => {
-          
-        }}
-      />
+      <Button title="Añadir al carrito" onPress={() => addToCart(item)} />
     </View>
   );
 }
