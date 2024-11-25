@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { fetchUserOrders, getUser } from '../services/firebaseService';
+import { fetchUserOrders, getUser, getRestaurantNameByMenuId } from '../services/firebaseService';
 
 export default function OrderHistoryScreen() {
   const [orders, setOrders] = useState([]);
@@ -16,9 +16,23 @@ export default function OrderHistoryScreen() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const userId = await getUser(); // Obtener el ID del usuario actual
-        const userOrders = await fetchUserOrders(userId); // Obtener pedidos
-        setOrders(userOrders);
+        const userId = await getUser();
+        const userOrders = await fetchUserOrders(userId);
+
+        // Agregar el nombre del restaurante a cada pedido
+        const ordersWithRestaurantNames = await Promise.all(
+          userOrders.map(async (order) => {
+            const updatedItems = await Promise.all(
+              order.items.map(async (item) => {
+                const restaurantName = await getRestaurantNameByMenuId(item.id);
+                return { ...item, restaurantName };
+              })
+            );
+            return { ...order, items: updatedItems };
+          })
+        );
+
+        setOrders(ordersWithRestaurantNames);
       } catch (error) {
         console.error('Error al cargar el historial de pedidos:', error);
       } finally {
@@ -43,7 +57,9 @@ export default function OrderHistoryScreen() {
           </View>
         )}
       />
-      <Text style={styles.orderTotal}>Total: ${item.total}</Text>
+      <Text style={styles.orderTotal}>
+        Total: ${item.items.reduce((sum, product) => sum + Number(product.price || 0), 0)}
+      </Text>
       <Text style={styles.restaurantName}>
         Restaurante: {item.items[0]?.restaurantName || 'Desconocido'}
       </Text>

@@ -228,7 +228,7 @@ export const getRestaurantNameByMenuId = async (menuId) => {
  * @param {Array} cartItems - Ítems del carrito.
  */
 // Función para guardar el pedido en la base de datos
-export const saveOrder = async (userId, cartItems, estimatedTime) => {
+export const saveOrder = async (userId, cartItems, estimatedTime, observation) => {
   try {
     if (!estimatedTime) {
       throw new Error('El tiempo estimado de entrega es obligatorio.');
@@ -250,6 +250,7 @@ export const saveOrder = async (userId, cartItems, estimatedTime) => {
         estado: 'Pendiente',
         createdAt: new Date().toISOString(),
         estimatedTime, // Incluye el tiempo estimado en cada pedido
+        observation: observation || '', // Incluye la observación si existe
       };
 
       return addDoc(collection(db, 'orders'), orderData);
@@ -262,8 +263,6 @@ export const saveOrder = async (userId, cartItems, estimatedTime) => {
     throw error;
   }
 };
-
-
 
 // Obtener historial de pedidos del usuario
 export const fetchUserOrders = async (userId) => {
@@ -358,34 +357,20 @@ export const fetchRestaurantOrders = async () => {
 
 export const getOrdersByState = async (role, id, estado) => {
   try {
-    let q;
-    if (role === 1) {
-      // Para usuarios (filtrar por userId y estado)
-      q = query(
-        collection(db, 'orders'),
-        where('userId', '==', id),
-        where('estado', '==', estado)
-      );
-    } else if (role === 2) {
-      // Para restaurantes (filtrar por restaurantId y estado)
-      q = query(
-        collection(db, 'orders'),
-        where('restaurantId', '==', id),
-        where('estado', '==', estado)
-      );
-    }
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where(role === 2 ? 'restaurantId' : 'userId', '==', id), where('estado', '==', estado));
+    const snapshot = await getDocs(q);
 
-    const querySnapshot = await getDocs(q);
-    const orders = querySnapshot.docs.map((doc) => ({
+    return snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(),
+      ...doc.data(), // Incluye todos los datos del documento, incluidas las observaciones
     }));
-    return orders;
   } catch (error) {
-    console.error('Error al obtener pedidos por estado:', error);
-    return [];
+    console.error('Error al obtener pedidos:', error);
+    throw error;
   }
 };
+
 
 export const getUserRoleAndId = async () => {
   const auth = getAuth();

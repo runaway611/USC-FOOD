@@ -33,14 +33,41 @@ export default function OrderStatusScreen({ route }) {
       <Text style={styles.orderId}>Pedido ID: {item.id}</Text>
       <Text>Estado: {item.estado}</Text>
       <Text>Hora estimada de entrega: {item.estimatedTime || 'No especificada'}</Text>
+  
+      {/* Mostrar observaciones si existen */}
+      {item.observation && (
+        <View style={styles.observationContainer}>
+          <Text style={styles.observationTitle}>Observaciones del cliente:</Text>
+          <Text style={styles.observationText}>{item.observation}</Text>
+        </View>
+      )}
+  
       {item.items.map((menuItem, index) => (
         <View key={index} style={styles.itemContainer}>
           <Text style={styles.itemName}>{menuItem.name}</Text>
           <Text>{menuItem.description}</Text>
         </View>
       ))}
+  
+      {activeTab === 'activos' && (
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={styles.inProcessButton}
+            onPress={() => handleUpdateStatus(item.id, 'En proceso')}
+          >
+            <Text style={styles.buttonText}>En proceso</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.completedButton}
+            onPress={() => handleUpdateStatus(item.id, 'Listo')}
+          >
+            <Text style={styles.buttonText}>Listo</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
+  
 
   return (
     <View style={styles.container}>

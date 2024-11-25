@@ -39,7 +39,7 @@ export default function App() {
           <Stack.Screen
             name="RestaurantAddItemScreen"
             component={RestaurantAddItemScreen}
-            options={{ title: 'Agregar Item' }}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="RestaurantEditItemScreen"
@@ -70,13 +70,13 @@ export default function App() {
           <Stack.Screen
             name="RestaurantOrders"
             component={RestaurantOrdersScreen}
-            options={{ title: 'Pedidos del Restaurante' }}
+            options={{ headerShown: false }}
           />
 
           <Stack.Screen
             name="Menu"
             component={MenuScreen}
-            options={{ title: 'Main Restaurant' }}
+            options={{ headerShown: false }}
           />
 
 

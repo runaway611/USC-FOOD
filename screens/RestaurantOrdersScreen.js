@@ -41,6 +41,15 @@ export default function RestaurantOrdersScreen({ route }) {
       <Text style={styles.orderId}>Pedido ID: {item.id}</Text>
       <Text>Estado: {item.estado}</Text>
       <Text>Hora estimada de entrega: {item.estimatedTime || 'No especificada'}</Text>
+
+      {/* Mostrar observaciones si existen */}
+      {item.observation && (
+        <View style={styles.observationContainer}>
+          <Text style={styles.observationTitle}>Observaciones del cliente:</Text>
+          <Text style={styles.observationText}>{item.observation}</Text>
+        </View>
+      )}
+
       {item.items.map((menuItem, index) => (
         <View key={index} style={styles.itemContainer}>
           <Text style={styles.itemName}>{menuItem.name}</Text>
@@ -65,6 +74,7 @@ export default function RestaurantOrdersScreen({ route }) {
       )}
     </View>
   );
+
 
   return (
     <View style={styles.container}>
@@ -115,5 +125,20 @@ const styles = StyleSheet.create({
   completedButton: { backgroundColor: '#4CAF50', padding: 10, borderRadius: 5 },
   buttonText: { color: '#fff', fontWeight: 'bold' },
   loading: { textAlign: 'center', fontSize: 16, marginVertical: 20 },
-  emptyText: { textAlign: 'center', fontSize: 16, color: '#888' },
+  emptyText: { textAlign: 'center', fontSize: 16, color: '#888' }, observationContainer: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 5,
+  },
+  observationTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#555',
+  },
+  observationText: {
+    fontSize: 14,
+    color: '#333',
+  },
 });

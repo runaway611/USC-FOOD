@@ -18,7 +18,8 @@
         "NSCameraUsageDescription": "Se necesita acceso a la cámara para tomar fotos.",
         "NSMicrophoneUsageDescription": "Se necesita acceso al micrófono para grabar videos.",
         "NSPhotoLibraryAddUsageDescription": "Se necesita acceso para guardar fotos en la biblioteca."
-      }
+      },
+      "bundleIdentifier": "com.runaway21.USCFOOD"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,6 +29,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b26e4464-bb77-48b4-931a-5a50afecdc7e"
+      }
     }
   }
 }

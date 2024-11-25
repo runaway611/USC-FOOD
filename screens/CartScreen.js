@@ -45,8 +45,8 @@ export default function CartScreen() {
     }
   
     try {
-      // Guardar el pedido dividido por restaurantes con el tiempo estimado
-      await saveOrder(uid, cart, estimatedTime.toISOString()); // Asegúrate de pasar `estimatedTime` como ISO string
+      // Guardar el pedido dividido por restaurantes con el tiempo estimado y observaciones
+      await saveOrder(uid, cart, estimatedTime.toISOString(), observation); 
       Alert.alert('Compra Confirmada', 'Tu pedido ha sido guardado exitosamente.');
       clearCart(); // Vaciar el carrito después de guardar
       setModalVisible(false); // Cerrar el modal
@@ -55,6 +55,7 @@ export default function CartScreen() {
       Alert.alert('Error', 'Hubo un problema al guardar el pedido. Por favor, inténtalo de nuevo.');
     }
   };
+  
   
 
   const renderItem = ({ item }) => (
