@@ -1,5 +1,5 @@
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, addDoc } from 'firebase/firestore'; 
+import { collection, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, addDoc, query, where, orderBy, onSnapshot   } from 'firebase/firestore'; 
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../config/firebaseConfig'; 
 
@@ -183,4 +183,238 @@ export const getUser = async () => {
   const uid = user.uid;
   return uid;
 }
+
+export const getRestaurantNameByMenuId = async (menuId) => {
+  try {
+    // Obtener el documento del menú en la colección allMenuItems
+    const menuDocRef = doc(db, 'allMenuItems', menuId);
+    const menuDocSnap = await getDoc(menuDocRef);
+
+    if (menuDocSnap.exists()) {
+      const menuData = menuDocSnap.data();
+      const restaurantId = menuData.restaurantId;
+
+      if (restaurantId) {
+        // Consultar el restaurante en la colección users
+        const restaurantDocRef = doc(db, 'users', restaurantId);
+        const restaurantDocSnap = await getDoc(restaurantDocRef);
+
+        if (restaurantDocSnap.exists()) {
+          const restaurantData = restaurantDocSnap.data();
+          const restaurantName = `${restaurantData.name} ${restaurantData.lastName}`;
+          return restaurantName;
+        } else {
+          console.error('Restaurante no encontrado');
+          return 'Restaurante desconocido';
+        }
+      } else {
+        console.error('restaurantId no encontrado en el menú');
+        return 'Restaurante desconocido';
+      }
+    } else {
+      console.error('Menú no encontrado');
+      return 'Restaurante desconocido';
+    }
+  } catch (error) {
+    console.error('Error al obtener el nombre del restaurante:', error);
+    return 'Restaurante desconocido';
+  }
+};
+
+
+/**
+ * Guarda los pedidos, dividiéndolos por restaurante.
+ * @param {string} userId - ID del usuario que realiza el pedido.
+ * @param {Array} cartItems - Ítems del carrito.
+ */
+// Función para guardar el pedido en la base de datos
+export const saveOrder = async (userId, cartItems, estimatedTime) => {
+  try {
+    if (!estimatedTime) {
+      throw new Error('El tiempo estimado de entrega es obligatorio.');
+    }
+
+    const ordersByRestaurant = cartItems.reduce((acc, item) => {
+      if (!acc[item.restaurantId]) {
+        acc[item.restaurantId] = [];
+      }
+      acc[item.restaurantId].push(item);
+      return acc;
+    }, {});
+
+    const promises = Object.entries(ordersByRestaurant).map(async ([restaurantId, items]) => {
+      const orderData = {
+        userId,
+        restaurantId,
+        items,
+        estado: 'Pendiente',
+        createdAt: new Date().toISOString(),
+        estimatedTime, // Incluye el tiempo estimado en cada pedido
+      };
+
+      return addDoc(collection(db, 'orders'), orderData);
+    });
+
+    await Promise.all(promises);
+    console.log('Pedidos guardados correctamente.');
+  } catch (error) {
+    console.error('Error al guardar los pedidos:', error);
+    throw error;
+  }
+};
+
+
+
+// Obtener historial de pedidos del usuario
+export const fetchUserOrders = async (userId) => {
+  try {
+    const ordersQuery = query(
+      collection(db, 'orders'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc') // Ordenar por fecha descendente
+    );
+    const querySnapshot = await getDocs(ordersQuery);
+
+    const orders = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    return orders;
+  } catch (error) {
+    console.error('Error al obtener los pedidos del usuario:', error);
+    throw error;
+  }
+};
+
+export const listenToUserOrders = (userId, callback) => {
+  try {
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where('userId', '==', userId));
+
+    // Listener para cambios en Firestore
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const orders = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      callback(orders); // Devolvemos los pedidos a través del callback
+    });
+
+    return unsubscribe; // Devuelve la función para cancelar la suscripción
+  } catch (error) {
+    console.error('Error al escuchar los pedidos del usuario:', error);
+    throw error;
+  }
+};
+
+export const updateOrderStatus = async (orderId, newStatus) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error('Usuario no autenticado');
+  }
+
+  try {
+    const orderRef = doc(db, 'orders', orderId);
+    await updateDoc(orderRef, {
+      estado: newStatus,
+    });
+    console.log(`Estado del pedido ${orderId} actualizado a ${newStatus}`);
+  } catch (error) {
+    console.error('Error actualizando el estado del pedido:', error);
+    throw error;
+  }
+};
+
+// Obtener los pedidos del restaurante autenticado
+export const fetchRestaurantOrders = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error('Usuario no autenticado');
+  }
+
+  const restaurantId = user.uid; // ID del restaurante autenticado
+
+  try {
+    const ordersCollection = collection(db, 'orders');
+    const querySnapshot = await getDocs(ordersCollection);
+
+    // Filtrar pedidos donde algún ítem coincida con el restaurantId
+    const restaurantOrders = querySnapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter((order) =>
+        order.items.some((item) => item.restaurantId === restaurantId)
+      );
+
+    return restaurantOrders;
+  } catch (error) {
+    console.error('Error obteniendo los pedidos del restaurante:', error);
+    throw error;
+  }
+};
+
+export const getOrdersByState = async (role, id, estado) => {
+  try {
+    let q;
+    if (role === 1) {
+      // Para usuarios (filtrar por userId y estado)
+      q = query(
+        collection(db, 'orders'),
+        where('userId', '==', id),
+        where('estado', '==', estado)
+      );
+    } else if (role === 2) {
+      // Para restaurantes (filtrar por restaurantId y estado)
+      q = query(
+        collection(db, 'orders'),
+        where('restaurantId', '==', id),
+        where('estado', '==', estado)
+      );
+    }
+
+    const querySnapshot = await getDocs(q);
+    const orders = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    return orders;
+  } catch (error) {
+    console.error('Error al obtener pedidos por estado:', error);
+    return [];
+  }
+};
+
+export const getUserRoleAndId = async () => {
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    throw new Error('Usuario no autenticado');
+  }
+
+  const docRef = doc(db, 'users', currentUser.uid);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return { id: currentUser.uid, role: docSnap.data().role };
+  } else {
+    throw new Error('No se encontró información del usuario');
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 
