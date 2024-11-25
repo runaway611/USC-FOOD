@@ -12,6 +12,7 @@ import { CartProvider } from './context/CartContext';
 import OrderHistoryScreen from './screens/OrderHistoryScreen';
 import OrderStatusScreen from './screens/OrderStatusScreen';
 import RestaurantOrdersScreen from './screens/RestaurantOrdersScreen';
+import MenuScreen from './screens/MenuScreen';
 
 const Stack = createStackNavigator();
 
@@ -71,6 +72,13 @@ export default function App() {
             component={RestaurantOrdersScreen}
             options={{ title: 'Pedidos del Restaurante' }}
           />
+
+          <Stack.Screen
+            name="Menu"
+            component={MenuScreen}
+            options={{ title: 'Main Restaurant' }}
+          />
+
 
         </Stack.Navigator>
       </NavigationContainer>

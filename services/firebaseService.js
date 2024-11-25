@@ -405,6 +405,24 @@ export const getUserRoleAndId = async () => {
   }
 };
 
+export const getMenusByRestaurant = async (restaurantId) => {
+  try {
+    const menuItemsRef = collection(db, 'allMenuItems');
+    const q = query(menuItemsRef, where('restaurantId', '==', restaurantId));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    } else {
+      console.log('No se encontraron menús para este restaurante.');
+      return [];
+    }
+  } catch (error) {
+    console.error('Error al obtener los menús:', error);
+    throw error;
+  }
+};
+
 
 
 

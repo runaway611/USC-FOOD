@@ -25,7 +25,7 @@ export default function LoginScreen() {
       if (userRole === 1) {
         navigation.navigate('User');  // Redirigir a la pantalla de usuario normal
       } else if (userRole === 2) {
-        navigation.navigate('RestaurantOrders');  // Redirigir a la pantalla de restaurante
+        navigation.navigate('Restaurant');  // Redirigir a la pantalla de restaurante
       } else {
         Alert.alert('Error', 'Rol de usuario desconocido');
       }
